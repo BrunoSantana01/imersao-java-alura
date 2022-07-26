@@ -1,0 +1,62 @@
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
+import java.util.List;
+import java.util.Map;
+
+public class App {
+    public static void main(String[] args) throws Exception {
+        // montando uma conexão HTTP para buscar os top 250 filmes na api do IMDb
+        //String url = "https://imdb-api.com/en/API/Top250Movies/k_pue8u181"; //minhakey  
+        //String url = "https://api.mocki.io/v2/549a5d8b"; // mock para driblar a queda da api do IMDb
+
+        String url = "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&start_date=2022-06-12&end_date=2022-06-14";
+
+        URI endereco = URI.create(url);
+        var client = HttpClient.newHttpClient();
+
+        // Criando request com metodo http GET, informando a URI
+        var request = HttpRequest.newBuilder(endereco).GET().build();
+
+        // response é a resposta dessa requisição enviada pelo cliente
+        HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
+
+        String body = response.body();
+        // System.out.println(body);
+
+        // extrair dados(titulo, poster, classificação)
+        var parser = new JsonParser();
+
+        List<Map<String, String>> listaDeFilmes = parser.parse(body);
+
+        // instancia fabrica de figurinhas
+        StickerFactory stickerFactory = new StickerFactory();
+
+        // exibir e manipular dados
+        for (int i = 0; i < 10; i++) {
+
+            Map<String, String> filme = listaDeFilmes.get(i);
+
+            String urlImagem = filme
+            .get("image")
+            .replaceAll("(@+)(.*).jpg$", "$1.jpg");
+            
+            String filmeNome = filme.get("title");
+
+            InputStream inputStream = new URL(urlImagem).openStream();
+
+            String nomeArquivo = "saida/" + filmeNome + ".png";
+
+            stickerFactory.createSticker(inputStream, nomeArquivo);
+
+            System.out.println(filmeNome);
+            System.out.println(filme.get("image"));
+            System.out.println(filme.get("imDbRating"));
+            System.out.println("");
+        }
+    }
+}
